@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>學生成績記錄</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC', 'Microsoft YaHei', sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== Login Page ===== */
+  .login-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  }
+  .login-icon { font-size: 64px; margin-bottom: 20px; }
+  .login-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; text-align: center; }
+  .login-subtitle { font-size: 14px; color: #8b949e; margin-bottom: 32px; text-align: center; }
+  .login-input {
+    width: 100%; max-width: 300px; padding: 14px 16px;
+    background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+    color: #e6edf3; font-size: 16px; text-align: center; letter-spacing: 4px; outline: none;
+  }
+  .login-input:focus { border-color: #388bfd; }
+  .login-input::placeholder { color: #484f58; letter-spacing: normal; }
+  .login-btn {
+    width: 100%; max-width: 300px; padding: 14px; margin-top: 16px;
+    background: #1f6feb; border: none; border-radius: 12px;
+    color: white; font-size: 16px; font-weight: 600; cursor: pointer;
+  }
+  .login-btn:active { background: #1a5fd0; }
+  .login-error { color: #f85149; font-size: 13px; margin-top: 12px; display: none; }
+  .login-error.visible { display: block; }
+
+  /* ===== Main App ===== */
+  .main-app { display: none; }
+  .main-app.visible { display: block; }
+
+  /* ===== Header ===== */
+  .header {
+    background: linear-gradient(135deg, #1f6feb 0%, #388bfd 100%);
+    padding: 16px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .header-icon { font-size: 24px; }
+  .header-title { font-size: 18px; font-weight: 700; }
+  .header-logout {
+    background: rgba(255,255,255,0.2); border: none; color: white;
+    padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer;
+  }
+
+  /* ===== Charts Section ===== */
+  .charts-container {
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .chart-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+  }
+  .chart-title {
+    font-size: 12px;
+    color: #8b949e;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .chart-canvas {
+    width: 100%;
+    height: 140px;
+  }
+  .chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: #8b949e;
+  }
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  /* ===== Filter Bar ===== */
+  .filter-bar {
+    padding: 0 16px 12px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1px solid #30363d;
+    background: #161b22;
+    color: #8b949e;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-btn.active {
+    background: #1f6feb;
+    border-color: #1f6feb;
+    color: white;
+  }
+
+  /* ===== Section Title ===== */
+  .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #8b949e;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    background: #388bfd;
+    border-radius: 2px;
+  }
+
+  /* ===== Record List ===== */
+  .record-list {
+    padding: 0 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .record-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .record-card:active { transform: scale(0.98); }
+  .record-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .record-student { font-size: 15px; font-weight: 600; }
+  .record-score { font-size: 20px; font-weight: 700; }
+  .record-score.high { color: #3fb950; }
+  .record-score.medium { color: #d29922; }
+  .record-score.low { color: #f85149; }
+  .record-score.none { color: #8b949e; font-size: 14px; }
+  .record-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .record-tag {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #21262d;
+    color: #8b949e;
+  }
+  .record-tag.subject-中文 { background: #3d1f1f; color: #ff7b72; }
+  .record-tag.subject-英文 { background: #1f2d3d; color: #79c0ff; }
+  .record-tag.subject-數學 { background: #1f3d1f; color: #7ee787; }
+  .record-tag.subject-中文常識 { background: #3d3d1f; color: #e3b341; }
+  .record-tag.subject-英文常識 { background: #3d1f3d; color: #d2a8ff; }
+  .record-focus {
+    font-size: 12px;
+    color: #8b949e;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ===== Detail Modal ===== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal {
+    background: #161b22;
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 20px;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .modal-title { font-size: 18px; font-weight: 700; }
+  .modal-close {
+    background: #21262d; border: none; color: #8b949e;
+    width: 32px; height: 32px; border-radius: 50%; font-size: 16px; cursor: pointer;
+  }
+  .modal-score {
+    font-size: 36px;
+    font-weight: 700;
+    text-align: center;
+    margin: 16px 0;
+  }
+  .modal-section { margin-bottom: 16px; }
+  .modal-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #58a6ff;
+    margin-bottom: 6px;
+  }
+  .modal-section-content {
+    font-size: 13px;
+    color: #c9d1d9;
+    line-height: 1.6;
+    background: #0d1117;
+    padding: 10px 12px;
+    border-radius: 8px;
+    white-space: pre-wrap;
+  }
+  .modal-links { display: flex; gap: 10px; flex-wrap: wrap; }
+  .modal-link {
+    display: inline-block;
+    padding: 8px 14px;
+    background: #1f6feb;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+
+  /* ===== Footer ===== */
+  .footer {
+    text-align: center;
+    padding: 20px;
+    color: #484f58;
+    font-size: 11px;
+    border-top: 1px solid #21262d;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Login Page ===== -->
+<div class="login-page" id="loginPage">
+  <div class="login-icon">📚</div>
+  <div class="login-title">學生成績記錄</div>
+  <div class="login-subtitle">請輸入密碼以查看</div>
+  <input type="password" class="login-input" id="passwordInput" placeholder="輸入密碼" maxlength="20">
+  <button class="login-btn" onclick="login()">登入</button>
+  <div class="login-error" id="loginError">密碼錯誤，請重試</div>
+</div>
+
+<!-- ===== Main App ===== -->
+<div class="main-app" id="mainApp">
+  <div class="header">
+    <div class="header-left">
+      <span class="header-icon">📚</span>
+      <span class="header-title">學生成績記錄</span>
+    </div>
+    <button class="header-logout" onclick="logout()">登出</button>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-container">
+    <div class="chart-card">
+      <div class="chart-title">科目分佈</div>
+      <canvas class="chart-canvas" id="pieChart"></canvas>
+      <div class="chart-legend" id="pieLegend"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">年級平均分</div>
+      <canvas class="chart-canvas" id="barChart"></canvas>
+      <div class="chart-legend" id="barLegend"></div>
+    </div>
+  </div>
+
+  <!-- Student Filter -->
+  <div class="filter-bar" id="studentFilter">
+    <button class="filter-btn active" data-student="all">全部</button>
+    <button class="filter-btn" data-student="Cici">Cici</button>
+    <button class="filter-btn" data-student="Coco">Coco</button>
+  </div>
+
+  <!-- Subject Filter -->
+  <div class="filter-bar" id="subjectFilter">
+    <button class="filter-btn active" data-subject="all">全部科目</button>
+    <button class="filter-btn" data-subject="中文">中文</button>
+    <button class="filter-btn" data-subject="英文">英文</button>
+    <button class="filter-btn" data-subject="數學">數學</button>
+    <button class="filter-btn" data-subject="中文常識">中文常識</button>
+    <button class="filter-btn" data-subject="英文常識">英文常識</button>
+  </div>
+
+  <!-- Records -->
+  <div class="section-title">成績記錄</div>
+  <div class="record-list" id="recordList"></div>
+
+  <div class="footer">
+    HIS Tools © 2026.1.00<br>
+    學生成績記錄系統
+  </div>
+</div>
+
+<!-- ===== Detail Modal ===== -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">詳情</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+const PASSWORD = "20261009";
+let allRecords = [];
+let currentStudent = "all";
+let currentSubject = "all";
+
+const SUBJECT_COLORS = {
+  '中文': '#ff7b72',
+  '英文': '#79c0ff',
+  '數學': '#7ee787',
+  '中文常識': '#e3b341',
+  '英文常識': '#d2a8ff'
+};
+
+const GRADE_ORDER = ['小一', '小二', '小三', '小四', '小五', '小六'];
+const GRADE_COLORS = {
+  '小一': '#79c0ff',
+  '小二': '#a5d6ff',
+  '小三': '#7ee787',
+  '小四': '#e3b341',
+  '小五': '#ffa657',
+  '小六': '#ff7b72'
+};
+
+// ===== Login =====
+function login() {
+  const input = document.getElementById('passwordInput').value;
+  if (input === PASSWORD) {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('mainApp').classList.add('visible');
+    document.getElementById('loginError').classList.remove('visible');
+    loadData();
+  } else {
+    document.getElementById('loginError').classList.add('visible');
+    document.getElementById('passwordInput').value = '';
+  }
+}
+document.getElementById('passwordInput').addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+function logout() {
+  document.getElementById('mainApp').classList.remove('visible');
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('passwordInput').value = '';
+}
+
+// ===== Load Data =====
+async function loadData() {
+  try {
+    const res = await fetch(`student-records.json?v=${Date.now()}`);
+    const data = await res.json();
+    allRecords = data.records;
+    renderAll();
+  } catch (err) {
+    document.getElementById('recordList').innerHTML = '<p style="color:#8b949e;text-align:center;padding:20px;">載入失敗</p>';
+  }
+}
+
+function renderAll() {
+  renderRecords();
+  drawPieChart();
+  drawBarChart();
+}
+
+// ===== Filter =====
+function getFilteredRecords() {
+  return allRecords.filter(r => {
+    if (currentStudent !== 'all' && r.student !== currentStudent) return false;
+    if (currentSubject !== 'all' && r.subject !== currentSubject) return false;
+    return true;
+  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+// ===== Records =====
+function renderRecords() {
+  const records = getFilteredRecords();
+  const list = document.getElementById('recordList');
+  if (records.length === 0) {
+    list.innerHTML = '<p style="color:#8b949e;text-align:center;padding:20px;">沒有符合條件的記錄</p>';
+    return;
+  }
+  list.innerHTML = records.map((r, i) => {
+    let scoreClass = 'none', scoreText = '未評分';
+    if (r.score !== null) {
+      if (r.score >= 85) scoreClass = 'high';
+      else if (r.score >= 70) scoreClass = 'medium';
+      else scoreClass = 'low';
+      scoreText = r.score + '%';
+    }
+    return `
+      <div class="record-card" onclick="showDetail(${i})">
+        <div class="record-header">
+          <div class="record-student">${r.student} · ${r.subject}</div>
+          <div class="record-score ${scoreClass}">${scoreText}</div>
+        </div>
+        <div class="record-meta">
+          <span class="record-tag">${r.date || '未設定日期'}</span>
+          <span class="record-tag">${r.grade || ''}</span>
+          <span class="record-tag">${r.source || ''}</span>
+        </div>
+        <div class="record-focus">${r.studyFocus || r.reviewFocus || '暫無學習重點'}</div>
+      </div>`;
+  }).join('');
+}
+
+// ===== Pie Chart: Subject Distribution =====
+function drawPieChart() {
+  const canvas = document.getElementById('pieChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  
+  const records = getFilteredRecords();
+  const subjectCounts = {};
+  records.forEach(r => {
+    if (r.subject) subjectCounts[r.subject] = (subjectCounts[r.subject] || 0) + 1;
+  });
+  
+  const total = Object.values(subjectCounts).reduce((a, b) => a + b, 0);
+  const cx = rect.width / 2;
+  const cy = rect.height / 2;
+  const radius = Math.min(cx, cy) - 10;
+  
+  ctx.clearRect(0, 0, rect.width, rect.height);
+  
+  if (total === 0) {
+    ctx.fillStyle = '#484f58';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('無數據', cx, cy);
+    document.getElementById('pieLegend').innerHTML = '';
+    return;
+  }
+  
+  let startAngle = -Math.PI / 2;
+  const entries = Object.entries(subjectCounts);
+  
+  entries.forEach(([subject, count]) => {
+    const sliceAngle = (count / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, radius, startAngle, startAngle + sliceAngle);
+    ctx.closePath();
+    ctx.fillStyle = SUBJECT_COLORS[subject] || '#8b949e';
+    ctx.fill();
+    startAngle += sliceAngle;
+  });
+  
+  // Center hole for donut effect
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 0.5, 0, Math.PI * 2);
+  ctx.fillStyle = '#161b22';
+  ctx.fill();
+  
+  // Center text
+  ctx.fillStyle = '#e6edf3';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(total, cx, cy - 4);
+  ctx.fillStyle = '#8b949e';
+  ctx.font = '9px sans-serif';
+  ctx.fillText('總記錄', cx, cy + 10);
+  
+  // Legend
+  document.getElementById('pieLegend').innerHTML = entries.map(([subject, count]) => 
+    `<div class="legend-item"><div class="legend-dot" style="background:${SUBJECT_COLORS[subject] || '#8b949e'}"></div>${subject} ${count}</div>`
+  ).join('');
+}
+
+// ===== Bar Chart: Grade Average =====
+function drawBarChart() {
+  const canvas = document.getElementById('barChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  
+  const records = getFilteredRecords().filter(r => r.score !== null);
+  const gradeScores = {};
+  records.forEach(r => {
+    if (!gradeScores[r.grade]) gradeScores[r.grade] = [];
+    gradeScores[r.grade].push(r.score);
+  });
+  
+  const gradeAvgs = {};
+  Object.entries(gradeScores).forEach(([grade, scores]) => {
+    gradeAvgs[grade] = scores.reduce((a, b) => a + b, 0) / scores.length;
+  });
+  
+  ctx.clearRect(0, 0, rect.width, rect.height);
+  
+  const entries = Object.entries(gradeAvgs).sort((a, b) => {
+    const idxA = GRADE_ORDER.indexOf(a[0]);
+    const idxB = GRADE_ORDER.indexOf(b[0]);
+    return (idxA === -1 ? 99 : idxA) - (idxB === -1 ? 99 : idxB);
+  });
+  if (entries.length === 0) {
+    ctx.fillStyle = '#484f58';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('無數據', rect.width / 2, rect.height / 2);
+    document.getElementById('barLegend').innerHTML = '';
+    return;
+  }
+  
+  const padding = { top: 15, right: 10, bottom: 25, left: 30 };
+  const chartWidth = rect.width - padding.left - padding.right;
+  const chartHeight = rect.height - padding.top - padding.bottom;
+  const barWidth = Math.min(30, chartWidth / entries.length * 0.6);
+  const gap = chartWidth / entries.length;
+  
+  // Y axis grid lines (0, 50, 100)
+  ctx.strokeStyle = '#21262d';
+  ctx.lineWidth = 1;
+  [0, 50, 100].forEach(val => {
+    const y = padding.top + chartHeight - (val / 100) * chartHeight;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(rect.width - padding.right, y);
+    ctx.stroke();
+    ctx.fillStyle = '#484f58';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(val, padding.left - 4, y + 3);
+  });
+  
+  // Bars
+  entries.forEach(([grade, avg], i) => {
+    const x = padding.left + gap * i + (gap - barWidth) / 2;
+    const barHeight = (avg / 100) * chartHeight;
+    const y = padding.top + chartHeight - barHeight;
+    
+    ctx.fillStyle = GRADE_COLORS[grade] || '#8b949e';
+    ctx.beginPath();
+    ctx.roundRect(x, y, barWidth, barHeight, [4, 4, 0, 0]);
+    ctx.fill();
+    
+    // Value on top
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(avg.toFixed(0) + '%', x + barWidth / 2, y - 4);
+    
+    // Grade label
+    ctx.fillStyle = '#8b949e';
+    ctx.font = '10px sans-serif';
+    ctx.fillText(grade, x + barWidth / 2, rect.height - padding.bottom + 14);
+  });
+  
+  // Legend
+  document.getElementById('barLegend').innerHTML = entries.map(([grade, avg]) => 
+    `<div class="legend-item"><div class="legend-dot" style="background:${GRADE_COLORS[grade] || '#8b949e'}"></div>${grade} ${avg.toFixed(1)}%</div>`
+  ).join('');
+}
+
+// ===== Detail =====
+function showDetail(index) {
+  const records = getFilteredRecords();
+  const r = records[index];
+  let scoreClass = 'none', scoreText = '未評分';
+  if (r.score !== null) {
+    if (r.score >= 85) scoreClass = 'high';
+    else if (r.score >= 70) scoreClass = 'medium';
+    else scoreClass = 'low';
+    scoreText = r.score + '%';
+  }
+  document.getElementById('modalTitle').textContent = `${r.student} - ${r.subject}`;
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-score ${scoreClass}">${scoreText}</div>
+    <div class="modal-section">
+      <div class="modal-section-title">基本資料</div>
+      <div class="modal-section-content">日期：${r.date || '未設定'}<br>年級：${r.grade || '未設定'}<br>出處：${r.source || '未設定'}<br>記錄ID：${r.id}</div>
+    </div>
+    ${r.studyFocus ? `<div class="modal-section"><div class="modal-section-title">📖 針對的學習重點</div><div class="modal-section-content">${r.studyFocus}</div></div>` : ''}
+    ${r.mistakeFocus ? `<div class="modal-section"><div class="modal-section-title">❌ 學生錯誤重點</div><div class="modal-section-content">${r.mistakeFocus}</div></div>` : ''}
+    ${r.reviewFocus ? `<div class="modal-section"><div class="modal-section-title">📝 需複習學習重點</div><div class="modal-section-content">${r.reviewFocus}</div></div>` : ''}
+    <div class="modal-section">
+      <div class="modal-section-title">📎 相關文件</div>
+      <div class="modal-links">
+        ${r.paperUrl ? `<a href="${r.paperUrl}" target="_blank" class="modal-link">📄 ${r.paperText || '試卷'}</a>` : ''}
+        ${r.correctedUrl ? `<a href="${r.correctedUrl}" target="_blank" class="modal-link">✏️ ${r.correctedText || '批改卷'}</a>` : ''}
+        ${!r.paperUrl && !r.correctedUrl ? '<span style="color:#8b949e;font-size:13px;">暫無文件</span>' : ''}
+      </div>
+    </div>`;
+  document.getElementById('modalOverlay').classList.add('visible');
+}
+function closeModal(event) {
+  if (!event || event.target.id === 'modalOverlay') {
+    document.getElementById('modalOverlay').classList.remove('visible');
+  }
+}
+
+// ===== Filters =====
+document.getElementById('studentFilter').addEventListener('click', e => {
+  if (e.target.classList.contains('filter-btn')) {
+    e.target.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    currentStudent = e.target.dataset.student;
+    renderAll();
+  }
+});
+document.getElementById('subjectFilter').addEventListener('click', e => {
+  if (e.target.classList.contains('filter-btn')) {
+    e.target.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    currentSubject = e.target.dataset.subject;
+    renderAll();
+  }
+});
+</script>
+</body>
+</html>
