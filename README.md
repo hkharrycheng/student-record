@@ -109,6 +109,7 @@ HTML 動態讀取 JSON
 | correctedText | string | 批改卷文件顯示文字 |
 
 ## Version Control
+- v1.01 (2026-10-13): header 改用圖標相片 LOGO
 
 | 版本 | 日期 | 改動 |
 |------|------|------|
